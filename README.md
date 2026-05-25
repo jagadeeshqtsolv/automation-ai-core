@@ -7,6 +7,13 @@ Shared libraries for the Automation AI platform. This repo contains two npm pack
 | `@jagadeeshqtsolv/core` | `/` (root) | Zod schemas, platform types, test-step actions — consumed by the platform API and the web-support library |
 | `@jagadeeshqtsolv/web-support` | `web/` | Playwright fixtures, locator helpers, action helpers, data generators, DOM capture script — consumed by per-project Playwright frameworks |
 
+### Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Package diagrams, schema validation flow, webLocator decision tree, publish lifecycle |
+| [docs/API.md](docs/API.md) | Full API reference — all schemas, types, functions, and web-support helpers |
+
 ---
 
 ## Prerequisites
