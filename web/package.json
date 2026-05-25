@@ -1,0 +1,21 @@
+{
+  "name": "@jagadeeshqtsolv/web-support",
+  "version": "1.0.1",
+  "exports": {
+    "./web-actions": "./src/web-actions.ts",
+    "./web-locate": "./src/web-locate.ts",
+    "./fixtures": "./src/fixtures.ts",
+    "./data-utils": "./utils/data-utils.ts"
+  },
+  "files": [
+    "src",
+    "utils",
+    "scripts"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.50.0"
+  }
+}
