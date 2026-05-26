@@ -6,6 +6,19 @@ const sessionPath = "environments/.recorder-session.json";
 const signalPath = "environments/.recorder-capture.signal";
 const stopPath = "environments/.recorder-stop.signal";
 const pidPath = "environments/.recorder.pid";
+const eventsPath = "environments/.recorder-events.json";
+
+function appendEvent(type, url) {
+  try {
+    let arr = [];
+    if (existsSync(eventsPath)) {
+      try { arr = JSON.parse(readFileSync(eventsPath, "utf8")); } catch {}
+    }
+    if (!Array.isArray(arr)) arr = [];
+    arr.push({ type, url: url ?? undefined, at: new Date().toISOString() });
+    writeFileSync(eventsPath, JSON.stringify(arr));
+  } catch {}
+}
 
 const session = JSON.parse(readFileSync(sessionPath, "utf8"));
 const baseURL = session.baseURL ?? "https://example.com";
@@ -32,13 +45,18 @@ function collectNodesInFrame() {
     "radio", "combobox", "switch", "tab", "menuitem",
   ]);
 
+  const vw = window.innerWidth || document.documentElement.clientWidth;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+
   function isVisible(el) {
     const style = window.getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
       return false;
     }
     const rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    // Must overlap the current viewport — excludes off-screen headers, footers, carousels
+    return rect.top < vh && rect.bottom > 0 && rect.left < vw && rect.right > 0;
   }
 
   function shortText(el) {
@@ -210,7 +228,13 @@ await page.goto(startPath);
 let activePage = page;
 context.on("page", (newPage) => {
   activePage = newPage;
+  newPage.waitForLoadState("domcontentloaded").then(() => {
+    appendEvent("newTab", newPage.url());
+  }).catch(() => {
+    try { appendEvent("newTab", newPage.url()); } catch {}
+  });
   newPage.on("close", () => {
+    try { appendEvent("closeTab", newPage.url()); } catch {}
     const pages = context.pages();
     if (pages.length > 0) activePage = pages[pages.length - 1];
   });
@@ -219,7 +243,7 @@ page.on("popup", (popup) => { activePage = popup; });
 
 if (mode === "start") {
   writeFileSync(pidPath, String(process.pid));
-  for (const p of [signalPath, stopPath]) {
+  for (const p of [signalPath, stopPath, eventsPath]) {
     if (existsSync(p)) {
       try { unlinkSync(p); } catch {}
     }
