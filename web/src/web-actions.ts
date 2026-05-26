@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { webLocator } from "./web-locate";
+import { webLocator } from "./web-locate.js";
 
 export { webLocator };
 
