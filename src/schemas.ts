@@ -124,8 +124,19 @@ export const updateRequirementBodySchema = z.object({
   content: z.string().min(1).max(REQUIREMENT_MAX_CHARS),
 });
 
+export const TEST_CASE_TYPE_VALUES = [
+  "smoke",
+  "functional",
+  "negative",
+  "edgecase",
+  "e2e",
+] as const;
+
+export type TestCaseType = (typeof TEST_CASE_TYPE_VALUES)[number];
+
 export const generatePlanBodySchema = z.object({
   requirementId: z.string().uuid(),
+  testCaseTypes: z.array(z.enum(TEST_CASE_TYPE_VALUES)).min(1).optional(),
 });
 
 export const generateCodeBodySchema = z.object({
@@ -448,6 +459,30 @@ export function executionProviderLabel(provider: ExecutionProvider): string {
       return provider;
   }
 }
+
+export const ciRunConfigSchema = z.object({
+  branch: z.string().min(1).max(100).default("main"),
+  workers: z.number().int().min(1).max(10).default(1),
+  retries: z.number().int().min(0).max(3).default(0),
+  fullyParallel: z.boolean().default(false),
+  browsers: z.array(z.enum(["chromium", "firefox", "webkit"])).min(1).default(["chromium"]),
+  defaultTag: z.string().max(200).default("@smoke"),
+});
+
+export type CiRunConfig = z.infer<typeof ciRunConfigSchema>;
+
+export const DEFAULT_CI_RUN_CONFIG: CiRunConfig = {
+  branch: "main",
+  workers: 1,
+  retries: 0,
+  fullyParallel: false,
+  browsers: ["chromium"],
+  defaultTag: "@smoke",
+};
+
+export const updateExecutionCiConfigBodySchema = z.object({
+  ciRunConfig: ciRunConfigSchema,
+});
 
 export const updateJiraConfigBodySchema = z.object({
   baseUrl: z.string().url().max(500).nullable().optional(),
