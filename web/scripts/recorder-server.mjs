@@ -1254,8 +1254,17 @@ async function handle(req, res) {
         activePage = await pwContext.newPage();
       }
 
-      console.log("  Navigating to:", body.url);
-      await activePage.goto(body.url, { waitUntil: "domcontentloaded", timeout: 30000 }).catch(e => console.log("  Nav:", e.message));
+      const rawUrl = String(body.url ?? "").trim();
+      // Fix common typos: https//... → https://...  or  missing protocol
+      const fixedUrl = rawUrl.match(/^https?:\/\//i)
+        ? rawUrl
+        : rawUrl.match(/^https?:\/[^/]/i)
+          ? rawUrl.replace(/^(https?):\/([^/])/i, "$1://$2")
+          : rawUrl.match(/^\/\//)
+            ? `https:${rawUrl}`
+            : `https://${rawUrl.replace(/^\/+/, "")}`;
+      console.log("  Navigating to:", fixedUrl);
+      await activePage.goto(fixedUrl, { waitUntil: "domcontentloaded", timeout: 30000 }).catch(e => console.log("  Nav:", e.message));
       jsonRes(res, 200, { ok: true, url: activePage.url() });
     } catch (e) {
       console.error("  Launch error:", e.message);
