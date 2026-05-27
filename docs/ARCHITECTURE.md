@@ -119,7 +119,7 @@ flowchart TD
     C & D & E --> G["support/web-locate.ts\nexport * from '@jagadeeshqtsolv/web-support/web-locate'"]
     C & D & E --> H["support/web-actions.ts\nexport * from '@jagadeeshqtsolv/web-support/web-actions'"]
 
-    F & G & H --> I["node_modules/@jagadeeshqtsolv/web-support\n(installed from GitHub Packages)"]
+    F & G & H --> I["node_modules/@jagadeeshqtsolv/web-support\n(installed from npmjs.com)"]
 
     I --> J["npx playwright test\nruns the spec"]
     J --> K["Pass / Fail report"]
@@ -163,7 +163,7 @@ How a change in this repo flows all the way to a running test.
 flowchart LR
     A["1 — Edit source\nsrc/ or web/src/"] --> B["2 — Build\nnpm run build\n(core only — web ships TS)"]
     B --> C["3 — Bump version\nnpm version patch"]
-    C --> D["4 — Publish\nnpm publish\n→ npm.pkg.github.com"]
+    C --> D["4 — Publish\nnpm publish\n→ registry.npmjs.org"]
 
     D --> E["5 — Update platform\nbump @jagadeeshqtsolv/core\nin apps/web/package.json"]
     E --> F["6 — npm install\nplatform picks up new types\n& schemas"]

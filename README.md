@@ -1,11 +1,11 @@
 # automation-ai-core
 
-Shared libraries for the Automation AI platform. This repo contains two npm packages published to GitHub Packages:
+Shared libraries for the AutomationAI platform. This repo contains two npm packages published to **npmjs.com** (public, no auth required):
 
 | Package | Folder | Purpose |
 |---------|--------|---------|
 | `@jagadeeshqtsolv/core` | `/` (root) | Zod schemas, platform types, test-step actions — consumed by the platform API and the web-support library |
-| `@jagadeeshqtsolv/web-support` | `web/` | Playwright fixtures, locator helpers, action helpers, data generators, DOM capture script — consumed by per-project Playwright frameworks |
+| `@jagadeeshqtsolv/web-support` | `web/` | Playwright fixtures, locator helpers, action helpers, data generators, recorder CLI — consumed by per-project Playwright frameworks |
 
 ### Documentation
 
@@ -18,38 +18,10 @@ Shared libraries for the Automation AI platform. This repo contains two npm pack
 
 ## Prerequisites
 
-- **Node.js** 20 or later
+- **Node.js** 22 or later
 - **npm** 10 or later
-- A **GitHub personal access token (PAT)** with `read:packages` (to install) and `write:packages` (to publish) scopes
 
----
-
-## Authentication — GitHub Packages
-
-Both packages are hosted on GitHub Packages under the `@jagadeeshqtsolv` scope. You must authenticate before installing or publishing.
-
-### 1. Create a PAT
-
-Go to **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens** (or classic tokens) and generate one with:
-- `read:packages` — required to install
-- `write:packages` — required to publish
-
-### 2. Log in via npm
-
-```bash
-npm login --registry=https://npm.pkg.github.com --scope=@jagadeeshqtsolv
-```
-
-Enter your GitHub username, the PAT as the password, and your email.
-
-### 3. Or add a project-level `.npmrc`
-
-Create (or append to) `~/.npmrc`:
-
-```
-//npm.pkg.github.com/:_authToken=YOUR_PAT_HERE
-@jagadeeshqtsolv:registry=https://npm.pkg.github.com
-```
+No tokens or registry configuration needed — both packages are public on npmjs.com.
 
 ---
 
@@ -70,7 +42,7 @@ automation-ai-core/
 │   ├── utils/
 │   │   └── data-utils.ts        # dataUtils — faker-based random data generators
 │   ├── scripts/
-│   │   └── capture-dom.mjs      # DOM capture script for the browser recorder
+│   │   └── recorder-server.mjs  # Web recorder server (npx automation-ai-recorder)
 │   └── package.json
 ├── dist/                        # compiled output (gitignored, built before publish)
 ├── package.json
@@ -80,15 +52,17 @@ automation-ai-core/
 
 ---
 
-## Setup
-
-### Install dependencies for both packages
+## Setup (local development)
 
 ```bash
-# Root package (@jagadeeshqtsolv/core)
+# Clone the repo
+git clone https://github.com/jagadeeshqtsolv/automation-ai-core.git
+cd automation-ai-core
+
+# Install root package deps
 npm install
 
-# Web-support package (@jagadeeshqtsolv/web-support)
+# Install web-support deps
 cd web && npm install && cd ..
 ```
 
@@ -96,69 +70,85 @@ cd web && npm install && cd ..
 
 ## Build
 
-Only `@jagadeeshqtsolv/core` has a TypeScript build step. `@jagadeeshqtsolv/web-support` ships TypeScript source directly (no compile step needed).
+`@jagadeeshqtsolv/core` requires a TypeScript compile step. `@jagadeeshqtsolv/web-support` ships its TypeScript source directly.
 
 ```bash
-# From the repo root
+# From the repo root — compiles src/ → dist/
 npm run build
 ```
 
-This runs `tsc -p tsconfig.build.json` and writes compiled JS + type declarations to `dist/`.
-
 ---
 
-## Publish
+## Publishing a new version
 
-### Publish `@jagadeeshqtsolv/core`
+> **Who does this:** Only the repo maintainer needs to publish. End users just `npm install`.
+
+### 1. Log in to npmjs.com (first time only)
+
+```bash
+npm login
+# Enter your npmjs.com username, password, and email
+# Use an Automation token if 2FA is enabled on your account
+```
+
+To create an Automation token: **npmjs.com → Account → Access Tokens → Generate New Token → Automation**.
+
+### 2. Publish `@jagadeeshqtsolv/core`
 
 ```bash
 # From the repo root
-npm version patch   # or minor / major
-npm publish
+npm version patch   # or: minor | major
+npm publish         # prepublishOnly runs build automatically
 ```
 
-`prepublishOnly` runs `npm run build` automatically before publishing.
-
-### Publish `@jagadeeshqtsolv/web-support`
+### 3. Publish `@jagadeeshqtsolv/web-support`
 
 ```bash
 cd web
-npm version patch   # or minor / major
+npm version patch   # or: minor | major
 npm publish
 cd ..
 ```
 
-No build step — the `files` field in `web/package.json` publishes `src/`, `utils/`, and `scripts/` as-is.
+### 4. Commit & push the version bumps
+
+```bash
+git add package.json web/package.json
+git commit -m "chore: bump versions — core vX.Y.Z, web-support vA.B.C"
+git push origin main
+```
+
+### 5. Update the platform to consume the new version
+
+In the **automation-ai-platform** repo:
+
+```bash
+# For @jagadeeshqtsolv/core
+cd apps/web
+npm install @jagadeeshqtsolv/core@latest
+
+# For @jagadeeshqtsolv/web-support (used in generated framework projects)
+# bump the version string in:
+# apps/web/src/lib/local-framework/web-framework-package.ts
+```
 
 ---
 
-## Using the packages in another project
+## Using the packages
 
-### Install
-
-Add to your project's `.npmrc`:
-
-```
-@jagadeeshqtsolv:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_PAT_HERE
-```
-
-Then install:
+### Install (no auth needed)
 
 ```bash
-# Core schemas and types
 npm install @jagadeeshqtsolv/core
-
-# Playwright web support (add as a file: dep or from registry)
 npm install @jagadeeshqtsolv/web-support
 ```
 
-### Using `@jagadeeshqtsolv/core`
+### `@jagadeeshqtsolv/core` — schemas and types
 
 ```typescript
 import { createProjectBodySchema, projectPlatformTypeSchema } from "@jagadeeshqtsolv/core";
 
-// Validate API request body
+// Validate an API request body
 const result = createProjectBodySchema.safeParse(req.body);
 
 // Use platform type
@@ -166,7 +156,7 @@ import type { ProjectPlatformType } from "@jagadeeshqtsolv/core";
 const platform: ProjectPlatformType = "web";
 ```
 
-### Using `@jagadeeshqtsolv/web-support` in Playwright tests
+### `@jagadeeshqtsolv/web-support` — Playwright helpers
 
 ```typescript
 // support/fixtures.ts
@@ -184,18 +174,17 @@ export * from "@jagadeeshqtsolv/web-support/web-locate";
 ```typescript
 import { webLocator } from "@jagadeeshqtsolv/web-support/web-locate";
 
-const spec = { strategy: "label", value: "Email address" };
-const locator = webLocator(page, spec);
+const locator = webLocator(page, { strategy: "label", value: "Email address" });
 ```
 
 #### Performing actions
 
 ```typescript
-import { webClick, webFill, webAssertVisible } from "@jagadeeshqtsolv/web-support/web-actions";
+import { clickWhenVisible, fillWhenVisible, expectVisible } from "@jagadeeshqtsolv/web-support/web-actions";
 
-await webFill(page, { strategy: "label", value: "Email" }, "user@example.com");
-await webClick(page, { strategy: "role", value: "button", role: "button" });
-await webAssertVisible(page, { strategy: "text", value: "Dashboard" });
+await fillWhenVisible(locator, "user@example.com");
+await clickWhenVisible(page.getByRole("button", { name: "Sign in" }));
+await expectVisible(page.getByText("Dashboard"));
 ```
 
 #### Generating random test data
@@ -206,18 +195,17 @@ import { dataUtils } from "@jagadeeshqtsolv/web-support/data-utils";
 const email    = dataUtils.email();
 const password = dataUtils.password(16);
 const name     = dataUtils.fullName();
-const phone    = dataUtils.phone();
 ```
 
----
+### Web Recorder (standalone CLI)
 
-## Development workflow
+```bash
+# Launch the recorder in any browser — no project setup needed
+npx @jagadeeshqtsolv/web-support
 
-1. Make changes in `src/` or `web/src/`
-2. Build core if you changed `src/`: `npm run build`
-3. Bump the version: `npm version patch` (in root and/or `web/`)
-4. Publish: `npm publish` (in root and/or `web/`)
-5. In the consuming platform repo, update the version in `package.json` and run `npm install`
+# Use a specific port
+npx @jagadeeshqtsolv/web-support --port 9200
+```
 
 ---
 
@@ -225,5 +213,5 @@ const phone    = dataUtils.phone();
 
 | Package | Registry |
 |---------|----------|
-| `@jagadeeshqtsolv/core` | [GitHub Packages](https://github.com/jagadeeshqtsolv/automation-ai-core/pkgs/npm/core) |
-| `@jagadeeshqtsolv/web-support` | [GitHub Packages](https://github.com/jagadeeshqtsolv/automation-ai-core/pkgs/npm/web-support) |
+| `@jagadeeshqtsolv/core` | [npmjs.com/package/@jagadeeshqtsolv/core](https://www.npmjs.com/package/@jagadeeshqtsolv/core) |
+| `@jagadeeshqtsolv/web-support` | [npmjs.com/package/@jagadeeshqtsolv/web-support](https://www.npmjs.com/package/@jagadeeshqtsolv/web-support) |
