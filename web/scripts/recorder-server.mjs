@@ -1339,20 +1339,33 @@ const server = http.createServer(async (req, res) => {
   catch (e) { if (!res.headersSent) jsonRes(res, 500, { error: e.message }); }
 });
 
-server.listen(PORT, "0.0.0.0", () => {
-  const url = `http://127.0.0.1:${PORT}`;
-  console.log(`\n \x1b[1m\x1b[36mAutomationAI Web Recorder\x1b[0m`);
-  console.log(` UI  → \x1b[32m\x1b[4m${url}\x1b[0m`);
-  console.log(` Out → ./pageobjects/\n`);
-  const cmd = process.platform === "darwin" ? `open "${url}"` : process.platform === "win32" ? `start "${url}"` : `xdg-open "${url}"`;
-  exec(cmd, () => {});
-});
+function startServer(port, attempt = 0) {
+  server.listen(port, "0.0.0.0", () => {
+    const url = `http://127.0.0.1:${port}`;
+    console.log(`\n \x1b[1m\x1b[36mAutomationAI Web Recorder\x1b[0m`);
+    console.log(` UI  → \x1b[32m\x1b[4m${url}\x1b[0m`);
+    console.log(` Out → ./pageobjects/\n`);
+    const cmd = process.platform === "darwin" ? `open "${url}"` : process.platform === "win32" ? `start "${url}"` : `xdg-open "${url}"`;
+    exec(cmd, () => {});
+  });
 
-server.on("error", e => {
-  if (e.code === "EADDRINUSE") console.error(`\x1b[31m Port ${PORT} in use. Try: node scripts/recorder-server.mjs --port 9222\x1b[0m`);
-  else console.error(e.message);
-  process.exit(1);
-});
+  server.on("error", e => {
+    if (e.code === "EADDRINUSE" && attempt < 10) {
+      const next = port + 1;
+      console.log(` Port ${port} in use, trying ${next}…`);
+      server.removeAllListeners("error");
+      server.close(() => startServer(next, attempt + 1));
+    } else if (e.code === "EADDRINUSE") {
+      console.error(`\x1b[31m Could not find a free port after 10 attempts. Specify one with --port\x1b[0m`);
+      process.exit(1);
+    } else {
+      console.error(e.message);
+      process.exit(1);
+    }
+  });
+}
+
+startServer(PORT);
 
 process.on("SIGINT", async () => {
   console.log("\n Shutting down…");
