@@ -1,23 +1,23 @@
 {
   "name": "@jagadeeshqtsolv/web-support",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "exports": {
     "./web-actions": {
       "types": "./dist/src/web-actions.d.ts",
-      "import": "./dist/src/web-actions.js"
+      "default": "./dist/src/web-actions.js"
     },
     "./web-locate": {
       "types": "./dist/src/web-locate.d.ts",
-      "import": "./dist/src/web-locate.js"
+      "default": "./dist/src/web-locate.js"
     },
     "./fixtures": {
       "types": "./dist/src/fixtures.d.ts",
-      "import": "./dist/src/fixtures.js"
+      "default": "./dist/src/fixtures.js"
     },
     "./data-utils": {
       "types": "./dist/utils/data-utils.d.ts",
-      "import": "./dist/utils/data-utils.js"
+      "default": "./dist/utils/data-utils.js"
     }
   },
   "bin": {
