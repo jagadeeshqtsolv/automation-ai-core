@@ -467,6 +467,8 @@ export const ciRunConfigSchema = z.object({
   fullyParallel: z.boolean().default(false),
   browsers: z.array(z.enum(["chromium", "firefox", "webkit"])).min(1).default(["chromium"]),
   defaultTag: z.string().max(200).default("@smoke"),
+  /** Comma-separated list of email addresses to receive the test report */
+  reportEmails: z.string().max(1000).default(""),
 });
 
 export type CiRunConfig = z.infer<typeof ciRunConfigSchema>;
@@ -478,6 +480,7 @@ export const DEFAULT_CI_RUN_CONFIG: CiRunConfig = {
   fullyParallel: false,
   browsers: ["chromium"],
   defaultTag: "@smoke",
+  reportEmails: "",
 };
 
 export const updateExecutionCiConfigBodySchema = z.object({
