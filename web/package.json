@@ -1,6 +1,6 @@
 {
   "name": "@jagadeeshqtsolv/web-support",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "type": "module",
   "exports": {
     "./web-actions": {
@@ -25,7 +25,8 @@
   },
   "files": [
     "dist",
-    "scripts"
+    "scripts",
+    "templates"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
